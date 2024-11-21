@@ -1,0 +1,77 @@
+module fsm(input clock, resetn, validIn, lastIn,
+           input [31:0] dataIn,
+           output reg [31:0]do,
+           output reg validOut, lastOut,read_enb,header,write_enb );
+parameter s0=3'b000,s1=3'b001,s2=3'b010,s3=3'b011,s4=3'b100;
+reg [15:0]cntr=0,plen=0;
+reg[2:0] s,ns;
+always @(posedge clock)
+    begin
+        if(!resetn)
+        begin
+            s <= s0;
+            read_enb=0;
+            header=0;
+        end
+        else 
+            s <= ns;
+     end           
+always@(posedge clock)    
+    begin
+        if(validIn)
+            begin
+            do<=dataIn; 
+           // #1;
+            cntr=cntr+1;//sequence counter
+            plen=plen+1;//payload length
+
+            end 
+    end     
+    
+    
+
+
+always@(*)
+    begin
+        case(s)
+            s0: if(validIn)
+                    begin
+                    write_enb=1;
+                    read_enb=0;
+                    ns=s1;
+                    end
+                else
+                    ns=s0;
+                    
+           s1: if(lastIn && !validIn)
+                    ns=s2;
+               else
+                    ns=s1;
+           s2:  begin
+                
+                     do=32'hffffffff; //static footer
+                    cntr=cntr+1;
+                     
+                     //header=0;
+                     //check again
+                     ns=s3;
+                end
+           s3: begin    
+                   header = 1;  //header bit assigning 
+                   cntr=cntr+1;
+                   do<={plen,cntr};
+                   ns=s4;
+               end
+           s4:begin
+                write_enb=0; // commands to read dataOut
+                header=0;
+                read_enb=1;
+                s=s0;
+              end
+               
+        endcase
+    end
+
+
+
+

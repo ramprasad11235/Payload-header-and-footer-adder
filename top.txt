@@ -1,0 +1,9 @@
+module topmodule(input clock,resetn,validIn,lastIn,
+                 input [31:0]dataIn,
+                 output [31:0]dataOut,
+                 output validOut,lastOut);
+wire [31:0]do;
+ 
+fsm FSM(.do(do),.read_enb(read_enb),.write_enb(write_enb),.header(header),.clock(clock),.resetn(resetn),.validIn(validIn),.lastIn(lastIn),.dataIn(dataIn)) ;
+fifo FIFO (.clock(clock),.resetn(resetn),.validOut(validOut),.lastOut(lastOut),.dataOut(dataOut),.do(do),.read_enb(read_enb),.write_enb(write_enb),.header(header)) ;               
+endmodule

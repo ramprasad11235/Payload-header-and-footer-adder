@@ -1,0 +1,58 @@
+module fifo(clock,resetn,write_enb,read_enb,do,header,dataOut,validOut,lastOut);
+input clock,resetn,write_enb,read_enb,header;
+input [31:0] do;
+output reg [31:0] dataOut;
+output validOut,lastOut;
+reg [9:0]rd_ptr,wr_ptr;
+reg [31:0] mem [400:0]; //381 is the maximum packet length
+always@(posedge clock)
+    begin
+        if(!resetn)
+            begin
+                rd_ptr<=10'b0;
+                wr_ptr<=10'b0;
+            end
+        else
+            begin
+                if(read_enb )
+                    rd_ptr <= rd_ptr+1;
+                else
+                    rd_ptr <= rd_ptr;
+                if(write_enb)
+                    wr_ptr <= wr_ptr+1;
+                else 
+                    wr_ptr <= wr_ptr;
+            end
+    end
+            
+// write operation
+
+always@(posedge clock)
+    begin
+        if(!resetn )
+            mem[wr_ptr[9:0]] <= 0;
+        else if(write_enb && !header)
+            mem[wr_ptr[9:0]] <= do;
+        else if(header && write_enb)
+        begin 
+            wr_ptr=0;
+            mem[wr_ptr[9:0]] <= do;   
+        end
+     end       
+//read operation
+always@(posedge clock)
+    begin
+        if(!resetn)
+            dataOut <= 0;
+        else if(read_enb)
+            dataOut <= mem[rd_ptr[9:0]];
+     end       
+ assign  lastOut = (wr_ptr == rd_ptr) ? 1'b1 : 1'b0 ;
+ assign validOut = (read_enb ) ? 1'b1 : 1'b0 ;
+
+
+//assign full=(wr_ptr[4] != rd_ptr[4]) && (wr_ptr[3:0] == rd_ptr[3:0])?  1'b1 : 1'b0 ;// read ptr=00000 and wr_ptr=10000
+
+//assign empty = (wr_ptr == rd_ptr) ? 1'b1 : 1'b0 ;
+           
+endmodule
